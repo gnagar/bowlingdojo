@@ -2,7 +2,11 @@ package in.co.appworks;
 
 public class ScoreCalculator {
 
+	private static final int ADJUST_ROLL_INDEX_FOR_STRIKE = 1;
+	private static final int MAX_FRAMES = 10;
+	private static final int ALL_PINS = 10;
 	int[] rolls;
+	
 
 	public void load(int[] rolls) {
 		this.rolls = rolls;
@@ -10,46 +14,40 @@ public class ScoreCalculator {
 
 	public int calculate() {
 		int score = 0;
-
-		boolean wasSpare = false;
-		boolean wasStrike = false;
-
-		for (int i = 0; i < rolls.length; i += 2) {
-			int thisFrame = getFrameScore(i);
-			
-			if (wasStrike) {
-				score += thisFrame;
-			} else {
-				if (wasSpare) {
-					score += rolls[i];
-				}
-			}
+		for (int rollIndex = 0, frame = 0; frame < MAX_FRAMES; rollIndex += 2, frame++) {
+			int thisFrame = getFrameScore(rollIndex);
 
 			score += thisFrame;
 
-			if (isStrike(rolls[i])) {
-				wasStrike = true;
-				i -= 1;
-				wasSpare = false;
-			} else {
-				wasStrike = false;
-				wasSpare = isSpare(rolls[i], rolls[i + 1]);
+			if (isStrike(rollIndex)) {
+				score += getStrikeBonus(rollIndex);
+				rollIndex -= ADJUST_ROLL_INDEX_FOR_STRIKE;
+			} else if (isSpare(rollIndex)) {
+				score += getSpareBonus(rollIndex);
 			}
 		}
 		return score;
 	}
 
-	private int getFrameScore(int i) {
-		return isStrike(rolls[i]) ? rolls[i] : rolls[i]
-				+ rolls[i + 1];
+	private int getSpareBonus(int rollIndex) {
+		return rolls[rollIndex + 2];
 	}
 
-	private boolean isStrike(int thisFrame) {
-		return thisFrame == 10;
+	private int getStrikeBonus(int rollIndex) {
+		return rolls[rollIndex + 1] + getSpareBonus(rollIndex);
 	}
 
-	private boolean isSpare(int rollOne, int rollTwo) {
-		return (rollOne + rollTwo) == 10;
+	private int getFrameScore(int rollIndex) {
+		return isStrike(rollIndex) ? rolls[rollIndex] : rolls[rollIndex]
+				+ rolls[rollIndex + 1];
+	}
+
+	private boolean isStrike(int rollIndex) {
+		return rolls[rollIndex] == ALL_PINS;
+	}
+
+	private boolean isSpare(int rollIndex) {
+		return (rolls[rollIndex] + rolls[rollIndex + 1]) == ALL_PINS;
 	}
 
 }
